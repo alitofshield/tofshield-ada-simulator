@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+node_modules/
+.wrangler/
+.dev.vars
+.env
+.env.*
+*.zip
+*.tar
+*.tar.gz
+*.log
+
+# Never publish measured or user-uploaded instrument data.
+*.h5
+*.hdf5
+*.hdf
+!fixtures/synthetic_tofwerk_style_reference.h5
+
+# Local editor and operating-system files.
+.DS_Store
+.idea/
+.vscode/
