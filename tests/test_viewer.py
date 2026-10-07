@@ -26,7 +26,7 @@ class ViewerTests(unittest.TestCase):
         self.assertEqual(response.get_json()["status"], "ok")
 
     def test_version_and_detection_endpoint(self) -> None:
-        self.assertEqual(self.client.get("/api/config").get_json()["version"], "0.4.7")
+        self.assertEqual(self.client.get("/api/config").get_json()["version"], "0.4.8")
         response = self.client.post("/api/detection-capability", json={
             "method": "calibration", "analyte": "TNT", "quantifier_mz": 227.0183,
             "mz_tolerance": 0.05, "concentration_unit": "ppb", "matrix": "Air",
@@ -289,6 +289,19 @@ class ViewerTests(unittest.TestCase):
         for key in ('flow_ml_min', 'reagent_signal', 'pressure_mbar', 'vacuum_mbar',
                     'resolving_power', 'integration_s', 'drift_ppm'):
             self.assertIn(f'{key}:', javascript)
+
+    def test_tofwerk_workspace_reuses_team_share_browser(self) -> None:
+        html = (server.STATIC_ROOT / "index.html").read_text(encoding="utf-8")
+        javascript = (server.STATIC_ROOT / "app.js").read_text(encoding="utf-8")
+        tofwerk_start = html.index('id="tofwerk-workspace"')
+        tofwerk_end = html.index('</main>', tofwerk_start)
+        tofwerk_html = html[tofwerk_start:tofwerk_end]
+        self.assertIn('id="team-share-browser"', tofwerk_html)
+        self.assertIn('id="team-share-list"', tofwerk_html)
+        self.assertNotIn('Private Team Share assessment catalog is not included', html)
+        self.assertNotIn('/static/tofwerk-assessment.js', html)
+        self.assertIn('/api/team-share/list', javascript)
+        self.assertEqual(html.count('id="team-share-browser"'), 1)
 
     def test_target_inputs_are_blank_and_context_autoselection_exists(self) -> None:
         html = (server.STATIC_ROOT / "index.html").read_text(encoding="utf-8")

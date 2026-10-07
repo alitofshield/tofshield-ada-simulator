@@ -82,7 +82,7 @@ function setupInstrument(fields) {
   });
   document.querySelector('#configuration-export').addEventListener('click',()=>{
     try {
-      const blob=new Blob([JSON.stringify({version:'0.4.7',notice:'Illustrative demo inputs, not manufacturer specifications',enabled:document.querySelector('#configuration-enabled').checked,configuration:instrumentSettings()},null,2)],{type:'application/json'});
+      const blob=new Blob([JSON.stringify({version:'0.4.8',notice:'Illustrative demo inputs, not manufacturer specifications',enabled:document.querySelector('#configuration-enabled').checked,configuration:instrumentSettings()},null,2)],{type:'application/json'});
       const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url;a.download='ADA-Instrument-Configuration.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     } catch(error) {toast(error.message,'error');}
   });
@@ -94,6 +94,7 @@ function setupWorkspaceTabs() {
     const target = tab.dataset.workspaceTarget;
     tabs.forEach(item => item.classList.toggle('active', item === tab));
     document.querySelectorAll('.workspace-panel').forEach(panel => panel.classList.toggle('active', panel.id === target));
+    if (target === 'tofwerk-workspace' && !state.teamShare.loaded) loadTeamShareFolder('');
     window.scrollTo({top: 0, behavior: 'smooth'});
   }));
 }
@@ -165,7 +166,7 @@ function setupDetectionCapability() {
   });
   document.querySelector('#detection-export').addEventListener('click', () => {
     if (!detectionStudyResult) return;
-    const blob = new Blob([JSON.stringify({viewer_version:'0.4.7', inputs:detectionStudyInput, results:detectionStudyResult}, null, 2)], {type:'application/json'});
+    const blob = new Blob([JSON.stringify({viewer_version:'0.4.8', inputs:detectionStudyInput, results:detectionStudyResult}, null, 2)], {type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='ADA-LOD-LOQ-Study.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
 }

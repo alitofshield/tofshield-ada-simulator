@@ -29,7 +29,7 @@
           <span class="status-dot"></span>
           <span>Local · read-only</span>
           <button id="reset-application" class="button danger" type="button" disabled>Reset application</button>
-          <span class="version">v0.4.7</span>
+          <span class="version">v0.4.8</span>
         </div>
       </header>
 
@@ -41,7 +41,7 @@
           <span>02</span><strong>Instrument Configuration</strong><small>Define the illustrative instrument and acquisition state</small>
         </button>
         <button class="workspace-tab" type="button" data-workspace-target="tofwerk-workspace">
-          <span>03</span><strong>TOFWERK HDF5</strong><small>Measured data · suitability for ADA development</small>
+          <span>03</span><strong>TOFWERK HDF5</strong><small>Private measured-data browser</small>
         </button>
       </nav>
 
@@ -87,24 +87,6 @@
               </div>
               <small id="path-help">Allowed read roots will appear here.</small>
             </form>
-
-            <div class="divider"><span>or use the private workspace</span></div>
-
-            <button id="team-share-toggle" class="button secondary full-width" type="button">
-              Open Team Share HDF5
-            </button>
-            <section id="team-share-browser" class="team-share-browser hidden" aria-label="Team Share HDF5 browser">
-              <div class="team-share-toolbar">
-                <button id="team-share-up" class="button ghost" type="button" disabled>↑ Up</button>
-                <button id="team-share-refresh" class="button ghost" type="button">Refresh</button>
-              </div>
-              <nav id="team-share-breadcrumbs" class="team-share-breadcrumbs" aria-label="Team Share folder path"></nav>
-              <p id="team-share-status" class="team-share-status" role="status">Ready to browse the private HDF5 workspace.</p>
-              <div id="team-share-list" class="team-share-list" role="listbox" aria-label="Team Share folders and HDF5 files"></div>
-              <button id="team-share-more" class="button ghost full-width hidden" type="button">Load more</button>
-              <div id="team-share-selection" class="team-share-selection">No HDF5 file selected.</div>
-              <button id="team-share-open" class="button primary full-width" type="button" disabled>Open selected HDF5</button>
-            </section>
 
             <button id="fixture-button" class="button secondary full-width" type="button">
               Open synthetic example
@@ -438,12 +420,26 @@
       </main>
 
     <main class="workspace-panel review-workspace" id="tofwerk-workspace">
-      <header class="review-heading"><div><span class="eyebrow">MEASURED DATA REVIEW</span><h1>TOFWERK HDF5</h1><p id="review-progress">Loading assessment…</p></div><div class="review-actions"><button id="review-refresh" type="button" class="button secondary">Refresh</button><button id="review-export" type="button" class="button primary">Export table</button></div></header>
-      <div class="review-notice"><strong id="review-state">Review in progress</strong>Development means ingestion, visualization and replay. A readable file is not automatically suitable for ML training or validated detection. Instrument groups use delivery context where explicit model metadata is unavailable.</div>
-      <details class="review-method"><summary>How to interpret these decisions</summary><p><strong>Good for dev:</strong> passes the structural and core numeric checks used here for ingestion, visualization and replay. <strong>Conditional:</strong> resolve the listed data-layout, timing or instrument-domain issue. <strong>No good as supplied:</strong> empty measurements or an HDF5 read failure; see the file-specific reason. Empty files can still serve as schema fixtures.</p><p><strong>ML training:</strong> mixture and drug standards provide useful label sources, but observation-level labels, exposure windows, matching controls and independent run partitions need curation. Ambient mipTOF observations are not verified target-class examples. Derivatives of one run must stay in the same partition.</p><p><strong>Evidence:</strong> all datasets inventoried; full numeric scans of the core spectra, peaks and timing arrays, mass-axis checks and SHA-256 fingerprints. Auxiliary waveforms and experimental detection performance are not exhaustively validated. Source paths and local-versus-downloaded provenance are recorded per file.</p><p><strong>Companions reviewed:</strong> Vocus experimental PDF; four MATLAB analysis files; mipTOF experiment notes, air-flow calibration workbook and processed CSV metadata. These describe noise/threshold issues, concentration uncertainty, contamination and acquisition events that limit scientific reuse.</p></details>
-      <div id="review-counts" class="review-counts"></div>
-      <div class="review-filters"><label>Find a file or finding<input id="review-search" type="search" placeholder="Search filenames, reasons…"></label><label>Instrument<select id="review-instrument"><option value="">All instruments</option><option>Vocus CI-TOF</option><option>mipTOF</option><option>Other / unconfirmed</option></select></label><label>ADA development<select id="review-status"><option value="">All decisions</option value="good">Good for dev</option><option value="conditional">Conditional</option><option value="not_suitable">No good as supplied</option><option value="unreviewed">Not inspected</option></select></label></div>
-      <div class="review-meta"><span id="review-results"></span><span id="review-updated"></span></div><p id="review-error" role="alert"></p><div id="review-tables"></div>
+      <header class="review-heading">
+        <div>
+          <span class="eyebrow">PRIVATE MEASURED DATA</span>
+          <h1>TOFWERK HDF5</h1>
+          <p>Browse the authenticated Team Share workspace. File presence does not imply scientific or ML-training suitability.</p>
+        </div>
+        <button id="team-share-toggle" class="button secondary" type="button">Hide Team Share HDF5</button>
+      </header>
+      <section id="team-share-browser" class="team-share-browser" aria-label="Team Share HDF5 browser">
+        <div class="team-share-toolbar">
+          <button id="team-share-up" class="button ghost" type="button" disabled>↑ Up</button>
+          <button id="team-share-refresh" class="button ghost" type="button">Refresh</button>
+        </div>
+        <nav id="team-share-breadcrumbs" class="team-share-breadcrumbs" aria-label="Team Share folder path"></nav>
+        <p id="team-share-status" class="team-share-status" role="status">Ready to browse the private HDF5 workspace.</p>
+        <div id="team-share-list" class="team-share-list" role="listbox" aria-label="Team Share folders and HDF5 files"></div>
+        <button id="team-share-more" class="button ghost full-width hidden" type="button">Load more</button>
+        <div id="team-share-selection" class="team-share-selection">No HDF5 file selected.</div>
+        <button id="team-share-open" class="button primary full-width" type="button" disabled>Open selected HDF5</button>
+      </section>
     </main>
     </div>
 
@@ -456,6 +452,5 @@
 
     <script src="/static/vendor/plotly-3.1.0.min.js"></script>
     <script src="/static/app.js"></script>
-    <script src="/static/tofwerk-assessment.js"></script>
   </body>
 </html>

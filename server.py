@@ -1069,7 +1069,7 @@ def config() -> Response:
             "allowed_roots": [str(path) for path in ALLOWED_ROOTS],
             "upload_limit_mb": UPLOAD_LIMIT_MB,
             "fixture_available": FIXTURE_PATH.exists(),
-            "version": "0.4.7",
+            "version": "0.4.8",
             "instrument_fields": FIELDS,
             "generator_catalog": generator_catalog(),
         }
@@ -1293,7 +1293,7 @@ def generate_synthetic(instrument: str) -> Response:
                 for key, value in detection_result.items():
                     if value is not None:
                         group.attrs[key] = value
-                group.attrs["Provenance"] = "User-entered study stored by ADA Viewer v0.4.7"
+                group.attrs["Provenance"] = "User-entered study stored by ADA Viewer v0.4.8"
         file_id, manifest = _register_file(path, filename, "synthetic generator", owned_upload=True)
     except Exception:
         path.unlink(missing_ok=True)
