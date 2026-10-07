@@ -17,7 +17,6 @@ node_modules/
 *.h5
 *.hdf5
 *.hdf
-!fixtures/synthetic_tofwerk_style_reference.h5
 
 # Local editor and operating-system files.
 .DS_Store

@@ -15,6 +15,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
+      - run: python scripts/generate_fixture.py
       - run: python -m unittest discover -s tests -v
       - uses: actions/setup-node@v4
         with:

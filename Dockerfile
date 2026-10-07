@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . ./
 RUN mkdir -p /data /tmp/tofshield/uploads /tmp/tofshield/generated \
+    && python scripts/generate_fixture.py \
     && useradd --create-home --uid 10001 appuser \
     && chown -R appuser:appuser /data /tmp/tofshield
 
