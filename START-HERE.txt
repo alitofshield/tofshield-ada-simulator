@@ -1,10 +1,10 @@
 TOFshield Simulator - Instrument Configurator
-Version 0.4.6 — production Cloudflare Container deployment
+Version 0.4.7 — secure Team Share/R2 HDF5 browsing
 
 1. Stop an older copy running on port8083 (Ctrl+C in its terminal).
 2. Extract this ZIP and open a terminal in its extracted folder.
 3. Run: bash start-simulator.sh
-4. Open http://127.0.0.1:8083 and verify v0.4.6 at the top right.
+4. Open http://127.0.0.1:8083 and verify v0.4.7 at the top right.
 5. Select User Guide at the top to open the guide in a separate window.
 
 Python 3 with venv is required. First launch installs Flask, h5py and NumPy

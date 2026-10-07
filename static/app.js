@@ -82,7 +82,7 @@ function setupInstrument(fields) {
   });
   document.querySelector('#configuration-export').addEventListener('click',()=>{
     try {
-      const blob=new Blob([JSON.stringify({version:'0.4.6',notice:'Illustrative demo inputs, not manufacturer specifications',enabled:document.querySelector('#configuration-enabled').checked,configuration:instrumentSettings()},null,2)],{type:'application/json'});
+      const blob=new Blob([JSON.stringify({version:'0.4.7',notice:'Illustrative demo inputs, not manufacturer specifications',enabled:document.querySelector('#configuration-enabled').checked,configuration:instrumentSettings()},null,2)],{type:'application/json'});
       const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url;a.download='ADA-Instrument-Configuration.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
     } catch(error) {toast(error.message,'error');}
   });
@@ -165,7 +165,7 @@ function setupDetectionCapability() {
   });
   document.querySelector('#detection-export').addEventListener('click', () => {
     if (!detectionStudyResult) return;
-    const blob = new Blob([JSON.stringify({viewer_version:'0.4.6', inputs:detectionStudyInput, results:detectionStudyResult}, null, 2)], {type:'application/json'});
+    const blob = new Blob([JSON.stringify({viewer_version:'0.4.7', inputs:detectionStudyInput, results:detectionStudyResult}, null, 2)], {type:'application/json'});
     const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='ADA-LOD-LOQ-Study.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
 }
@@ -182,6 +182,13 @@ const state = {
   timeSeries: null,
   hdfMatches: [],
   hdfMatchIndex: -1,
+  teamShare: {
+    prefix: "",
+    selectedKey: null,
+    selectedName: null,
+    cursor: null,
+    loaded: false,
+  },
 };
 
 const els = {
@@ -191,6 +198,16 @@ const els = {
   pathForm: document.querySelector("#path-form"),
   pathInput: document.querySelector("#path-input"),
   pathHelp: document.querySelector("#path-help"),
+  teamShareToggle: document.querySelector("#team-share-toggle"),
+  teamShareBrowser: document.querySelector("#team-share-browser"),
+  teamShareUp: document.querySelector("#team-share-up"),
+  teamShareRefresh: document.querySelector("#team-share-refresh"),
+  teamShareBreadcrumbs: document.querySelector("#team-share-breadcrumbs"),
+  teamShareStatus: document.querySelector("#team-share-status"),
+  teamShareList: document.querySelector("#team-share-list"),
+  teamShareMore: document.querySelector("#team-share-more"),
+  teamShareSelection: document.querySelector("#team-share-selection"),
+  teamShareOpen: document.querySelector("#team-share-open"),
   fixtureButton: document.querySelector("#fixture-button"),
   vocusForm: document.querySelector("#vocus-panel"),
   vocusReagent: document.querySelector("#vocus-reagent"),
@@ -448,6 +465,7 @@ async function resetApplication() {
   els.qualityContent.innerHTML = '<div class="empty-panel">Open a file to see calibration and data-quality notes.</div>';
   els.candidateSelect.innerHTML = "<option>No compatible dataset loaded</option>";
   els.rangeMin.value = ""; els.rangeMax.value = ""; els.pathInput.value = "";
+  clearTeamShareSelection();
   els.timeMassMin.value = ""; els.timeMassMax.value = ""; els.timeMin.value = ""; els.timeMax.value = "";
   els.chart.classList.add("hidden"); els.chart.innerHTML = "";
   els.chartMessage.classList.remove("hidden"); els.chartMessage.innerHTML = '<div class="chart-placeholder"><span class="spectrum-mark" aria-hidden="true"></span><strong>No spectrum loaded</strong><p>Load a compatible HDF5 file from the panel on the left.</p></div>';
@@ -854,6 +872,169 @@ async function uploadFile(file) {
   } finally {
     hideLoading();
     els.fileInput.value = "";
+  }
+}
+
+function formatFileSize(bytes) {
+  const value = Number(bytes);
+  if (!Number.isFinite(value) || value < 0) return "Unknown size";
+  const units = ["B", "KiB", "MiB", "GiB", "TiB"];
+  let amount = value;
+  let unitIndex = 0;
+  while (amount >= 1024 && unitIndex < units.length - 1) {
+    amount /= 1024;
+    unitIndex += 1;
+  }
+  return `${amount.toLocaleString(undefined, { maximumFractionDigits: unitIndex ? 1 : 0 })} ${units[unitIndex]}`;
+}
+
+function setTeamShareStatus(message, kind = "normal") {
+  els.teamShareStatus.textContent = message;
+  els.teamShareStatus.dataset.kind = kind;
+}
+
+function clearTeamShareSelection() {
+  state.teamShare.selectedKey = null;
+  state.teamShare.selectedName = null;
+  els.teamShareOpen.disabled = true;
+  els.teamShareSelection.textContent = "No HDF5 file selected.";
+  els.teamShareList.querySelectorAll(".team-share-entry.selected").forEach((entry) => {
+    entry.classList.remove("selected");
+    entry.setAttribute("aria-selected", "false");
+  });
+}
+
+function renderTeamShareBreadcrumbs() {
+  els.teamShareBreadcrumbs.replaceChildren();
+  const root = document.createElement("button");
+  root.type = "button";
+  root.textContent = "HDF5";
+  root.addEventListener("click", () => loadTeamShareFolder(""));
+  els.teamShareBreadcrumbs.append(root);
+
+  const segments = state.teamShare.prefix.split("/").filter(Boolean);
+  let cumulative = "";
+  segments.forEach((segment) => {
+    cumulative = cumulative ? `${cumulative}/${segment}` : segment;
+    const separator = document.createElement("span");
+    separator.textContent = "/";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = segment;
+    const target = cumulative;
+    button.addEventListener("click", () => loadTeamShareFolder(target));
+    els.teamShareBreadcrumbs.append(separator, button);
+  });
+  els.teamShareUp.disabled = !segments.length;
+}
+
+function appendTeamShareEntries(folders, files) {
+  folders.forEach((folder) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "team-share-entry folder";
+    button.setAttribute("role", "option");
+    const icon = document.createElement("span");
+    icon.className = "team-share-entry-icon";
+    icon.textContent = "▸";
+    const details = document.createElement("span");
+    const name = document.createElement("strong");
+    name.textContent = folder.name;
+    const metadata = document.createElement("small");
+    metadata.textContent = "Folder";
+    details.append(name, metadata);
+    button.append(icon, details);
+    button.addEventListener("click", () => loadTeamShareFolder(folder.prefix));
+    els.teamShareList.append(button);
+  });
+
+  files.forEach((file) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "team-share-entry file";
+    button.setAttribute("role", "option");
+    button.setAttribute("aria-selected", "false");
+    const icon = document.createElement("span");
+    icon.className = "team-share-entry-icon";
+    icon.textContent = "H5";
+    const details = document.createElement("span");
+    const name = document.createElement("strong");
+    name.textContent = file.name;
+    const metadata = document.createElement("small");
+    const uploaded = file.uploaded ? new Date(file.uploaded).toLocaleString() : "Date unavailable";
+    metadata.textContent = `${formatFileSize(file.size)} · ${uploaded}`;
+    details.append(name, metadata);
+    button.append(icon, details);
+    button.addEventListener("click", () => {
+      clearTeamShareSelection();
+      state.teamShare.selectedKey = file.key;
+      state.teamShare.selectedName = file.name;
+      button.classList.add("selected");
+      button.setAttribute("aria-selected", "true");
+      els.teamShareSelection.textContent = `Selected: ${file.name} · ${formatFileSize(file.size)}`;
+      els.teamShareOpen.disabled = false;
+      setTeamShareStatus("File selected. Choose Open selected HDF5 to continue.");
+    });
+    els.teamShareList.append(button);
+  });
+}
+
+async function loadTeamShareFolder(prefix = "", { append = false, cursor = null } = {}) {
+  els.teamShareUp.disabled = true;
+  els.teamShareRefresh.disabled = true;
+  els.teamShareMore.disabled = true;
+  setTeamShareStatus(append ? "Loading more HDF5 entries…" : "Loading Team Share folder…", "loading");
+  try {
+    const parameters = new URLSearchParams({ prefix, limit: "100" });
+    if (cursor) parameters.set("cursor", cursor);
+    const payload = await fetchJson(`/api/team-share/list?${parameters.toString()}`);
+    state.teamShare.prefix = payload.prefix || "";
+    state.teamShare.cursor = payload.cursor || null;
+    state.teamShare.loaded = true;
+    if (!append) {
+      els.teamShareList.replaceChildren();
+      clearTeamShareSelection();
+    }
+    appendTeamShareEntries(payload.folders || [], payload.files || []);
+    renderTeamShareBreadcrumbs();
+    const count = (payload.folders || []).length + (payload.files || []).length;
+    const totalShown = els.teamShareList.childElementCount;
+    setTeamShareStatus(
+      totalShown ? `${totalShown} folder and file entr${totalShown === 1 ? "y" : "ies"} shown.` : "This folder contains no HDF5 files or subfolders.",
+    );
+    els.teamShareMore.classList.toggle("hidden", !payload.truncated || !payload.cursor);
+    if (!count && append) setTeamShareStatus("No additional entries were returned.");
+  } catch (error) {
+    setTeamShareStatus(error.message, "error");
+    toast(error.message, "error");
+  } finally {
+    els.teamShareRefresh.disabled = false;
+    els.teamShareMore.disabled = false;
+    renderTeamShareBreadcrumbs();
+  }
+}
+
+async function openSelectedTeamShareFile() {
+  if (!state.teamShare.selectedKey) return;
+  const displayName = state.teamShare.selectedName || "selected HDF5 file";
+  setTeamShareStatus(`Securely streaming ${displayName} into the private analysis cache…`, "loading");
+  showLoading(`Loading ${displayName} from Team Share…`);
+  els.teamShareOpen.disabled = true;
+  try {
+    const payload = await fetchJson("/api/team-share/open", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: state.teamShare.selectedKey }),
+    });
+    await acceptOpenResponse(payload);
+    setTeamShareStatus(`${displayName} opened successfully.`, "success");
+    toast("Team Share HDF5 opened in the existing ADA analysis workspace.");
+  } catch (error) {
+    setTeamShareStatus(error.message, "error");
+    toast(error.message, "error");
+  } finally {
+    els.teamShareOpen.disabled = !state.teamShare.selectedKey;
+    hideLoading();
   }
 }
 
@@ -1454,6 +1635,23 @@ function bindUi() {
     openLocalPath(els.pathInput.value.trim());
   });
   els.fixtureButton.addEventListener("click", openFixture);
+  els.teamShareToggle.addEventListener("click", () => {
+    const opening = els.teamShareBrowser.classList.contains("hidden");
+    els.teamShareBrowser.classList.toggle("hidden", !opening);
+    els.teamShareToggle.textContent = opening ? "Hide Team Share HDF5" : "Open Team Share HDF5";
+    if (opening && !state.teamShare.loaded) loadTeamShareFolder("");
+  });
+  els.teamShareUp.addEventListener("click", () => {
+    const segments = state.teamShare.prefix.split("/").filter(Boolean);
+    segments.pop();
+    loadTeamShareFolder(segments.join("/"));
+  });
+  els.teamShareRefresh.addEventListener("click", () => loadTeamShareFolder(state.teamShare.prefix));
+  els.teamShareMore.addEventListener("click", () => loadTeamShareFolder(
+    state.teamShare.prefix,
+    { append: true, cursor: state.teamShare.cursor },
+  ));
+  els.teamShareOpen.addEventListener("click", openSelectedTeamShareFile);
   els.vocusTargetPicker.addEventListener("change", () => {
     if (els.vocusTargetPicker.value) {
       appendCommaValue(els.vocusTargets, els.vocusTargetPicker.value);

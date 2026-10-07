@@ -335,6 +335,136 @@ h3 {
   text-transform: uppercase;
 }
 
+.team-share-browser {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(3, 17, 23, 0.62);
+}
+
+.team-share-toolbar {
+  display: flex;
+  gap: 8px;
+}
+
+.team-share-toolbar .button {
+  min-height: 34px;
+  padding: 6px 10px;
+}
+
+.team-share-breadcrumbs {
+  display: flex;
+  overflow-x: auto;
+  align-items: center;
+  gap: 5px;
+  padding-bottom: 2px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.team-share-breadcrumbs button {
+  cursor: pointer;
+  border: 0;
+  padding: 2px;
+  color: var(--cyan);
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+}
+
+.team-share-status,
+.team-share-selection {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.team-share-status[data-kind="loading"] {
+  color: var(--cyan);
+}
+
+.team-share-status[data-kind="success"] {
+  color: #69d6a7;
+}
+
+.team-share-status[data-kind="error"] {
+  color: #ff9b9b;
+}
+
+.team-share-list {
+  display: grid;
+  max-height: 310px;
+  overflow-y: auto;
+  gap: 6px;
+  padding-right: 3px;
+}
+
+.team-share-entry {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 9px;
+  width: 100%;
+  cursor: pointer;
+  align-items: center;
+  padding: 9px;
+  border: 1px solid #234955;
+  border-radius: 9px;
+  color: var(--ink);
+  background: #061820;
+  text-align: left;
+}
+
+.team-share-entry:hover,
+.team-share-entry:focus-visible,
+.team-share-entry.selected {
+  border-color: var(--cyan);
+  background: rgba(84, 224, 207, 0.08);
+}
+
+.team-share-entry > span:last-child {
+  min-width: 0;
+}
+
+.team-share-entry strong,
+.team-share-entry small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-share-entry strong {
+  font-size: 0.78rem;
+}
+
+.team-share-entry small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.team-share-entry-icon {
+  display: grid;
+  width: 32px;
+  height: 28px;
+  place-items: center;
+  border-radius: 7px;
+  color: var(--cyan);
+  background: rgba(84, 224, 207, 0.1);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.team-share-selection {
+  padding-top: 8px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--ink);
+}
+
 .input-button-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

@@ -1,6 +1,6 @@
 {
   "name": "tofshield-ada-simulator",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "private": true,
   "description": "Cloudflare Container deployment for the TOFshield Simulator and Instrument Configurator",
   "scripts": {

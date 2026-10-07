@@ -1,9 +1,9 @@
-# TOFshield Simulator - Instrument Configurator v0.4.6
+# TOFshield Simulator - Instrument Configurator v0.4.7
 
-Version 0.4.6 adds the production Cloudflare Container deployment. The public
-online edition intentionally omits the private Team Share acquisition catalog;
-authorized users can upload HDF5 and companion files for analysis during their
-authenticated session.
+Version 0.4.7 adds secure Team Share/R2 HDF5 browsing to the production Cloudflare
+Container deployment. Authorized users can browse the private Team Share HDF5
+catalog or upload HDF5 and companion files for analysis during their authenticated
+session.
 
 Start with START-HERE.txt. The integrated User Guide describes current behavior; older release notes below describe earlier versions.
 

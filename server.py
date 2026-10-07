@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import unquote
 
 import h5py
 import numpy as np
@@ -44,6 +45,8 @@ MAX_DATASETS = 8_000
 MAX_METADATA_ITEMS = 1_500
 MAX_ATTRIBUTE_ARRAY = 64
 MAX_SPECTRUM_POINTS = 120_000
+TEAM_SHARE_IMPORT_MARKER = "team-share-worker"
+STREAM_COPY_CHUNK_BYTES = 1024 * 1024
 
 
 def _configured_roots() -> list[Path]:
@@ -1066,7 +1069,7 @@ def config() -> Response:
             "allowed_roots": [str(path) for path in ALLOWED_ROOTS],
             "upload_limit_mb": UPLOAD_LIMIT_MB,
             "fixture_available": FIXTURE_PATH.exists(),
-            "version": "0.4.6",
+            "version": "0.4.7",
             "instrument_fields": FIELDS,
             "generator_catalog": generator_catalog(),
         }
@@ -1141,6 +1144,63 @@ def upload() -> Response:
     except Exception:
         destination.unlink(missing_ok=True)
         raise
+    return jsonify({"file_id": file_id, "manifest": manifest})
+
+
+@app.post("/api/internal/team-share-import")
+def import_team_share_hdf5() -> Response:
+    if request.headers.get("X-ADA-Internal-Import") != TEAM_SHARE_IMPORT_MARKER:
+        return jsonify({"error": "Not found."}), 404
+
+    encoded_key = request.headers.get("X-ADA-Team-Share-Key", "")
+    try:
+        object_key = unquote(encoded_key, errors="strict")
+    except UnicodeDecodeError as exc:
+        raise ValueError("The Team Share object key is invalid.") from exc
+    original_name = Path(object_key).name
+    suffix = Path(original_name).suffix.lower()
+    if not original_name or suffix not in VALID_EXTENSIONS:
+        raise ValueError("Choose a Team Share file ending in .h5, .hdf5, or .hdf.")
+
+    maximum_bytes = int(app.config["MAX_CONTENT_LENGTH"])
+    if request.content_length is not None and request.content_length > maximum_bytes:
+        raise RequestEntityTooLarge()
+
+    safe_name = secure_filename(original_name) or f"dataset{suffix}"
+    unique_prefix = uuid.uuid4().hex
+    partial = UPLOAD_ROOT / f"{unique_prefix}-{safe_name}.part"
+    destination = UPLOAD_ROOT / f"{unique_prefix}-{safe_name}"
+    received_bytes = 0
+
+    try:
+        with partial.open("xb") as output:
+            while True:
+                chunk = request.stream.read(STREAM_COPY_CHUNK_BYTES)
+                if not chunk:
+                    break
+                received_bytes += len(chunk)
+                if received_bytes > maximum_bytes:
+                    raise RequestEntityTooLarge()
+                output.write(chunk)
+
+        if received_bytes == 0:
+            raise ValueError("The Team Share object is empty.")
+        if request.content_length is not None and received_bytes != request.content_length:
+            raise ValueError("The Team Share transfer was incomplete.")
+
+        os.replace(partial, destination)
+        path = _validate_hdf5_path(destination, require_allowed_root=False)
+        file_id, manifest = _register_file(
+            path,
+            original_name,
+            "Team Share/R2",
+            owned_upload=True,
+        )
+    except Exception:
+        partial.unlink(missing_ok=True)
+        destination.unlink(missing_ok=True)
+        raise
+
     return jsonify({"file_id": file_id, "manifest": manifest})
 
 
@@ -1233,7 +1293,7 @@ def generate_synthetic(instrument: str) -> Response:
                 for key, value in detection_result.items():
                     if value is not None:
                         group.attrs[key] = value
-                group.attrs["Provenance"] = "User-entered study stored by ADA Viewer v0.4.6"
+                group.attrs["Provenance"] = "User-entered study stored by ADA Viewer v0.4.7"
         file_id, manifest = _register_file(path, filename, "synthetic generator", owned_upload=True)
     except Exception:
         path.unlink(missing_ok=True)

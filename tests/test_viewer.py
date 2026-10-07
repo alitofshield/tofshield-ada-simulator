@@ -26,7 +26,7 @@ class ViewerTests(unittest.TestCase):
         self.assertEqual(response.get_json()["status"], "ok")
 
     def test_version_and_detection_endpoint(self) -> None:
-        self.assertEqual(self.client.get("/api/config").get_json()["version"], "0.4.6")
+        self.assertEqual(self.client.get("/api/config").get_json()["version"], "0.4.7")
         response = self.client.post("/api/detection-capability", json={
             "method": "calibration", "analyte": "TNT", "quantifier_mz": 227.0183,
             "mz_tolerance": 0.05, "concentration_unit": "ppb", "matrix": "Air",

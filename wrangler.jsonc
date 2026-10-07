@@ -13,6 +13,12 @@
       "custom_domain": true
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "TEAM_SHARE",
+      "bucket_name": "tofshield-sales-marketing-eu"
+    }
+  ],
   "containers": [
     {
       "class_name": "SimulatorContainer",

@@ -1,3 +1,1 @@
-interface Env {
-  SIMULATOR_CONTAINER: DurableObjectNamespace;
-}
+/// <reference path="./worker-runtime.generated.d.ts" />

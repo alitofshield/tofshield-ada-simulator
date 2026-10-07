@@ -29,7 +29,7 @@
           <span class="status-dot"></span>
           <span>Local · read-only</span>
           <button id="reset-application" class="button danger" type="button" disabled>Reset application</button>
-          <span class="version">v0.4.6</span>
+          <span class="version">v0.4.7</span>
         </div>
       </header>
 
@@ -87,6 +87,24 @@
               </div>
               <small id="path-help">Allowed read roots will appear here.</small>
             </form>
+
+            <div class="divider"><span>or use the private workspace</span></div>
+
+            <button id="team-share-toggle" class="button secondary full-width" type="button">
+              Open Team Share HDF5
+            </button>
+            <section id="team-share-browser" class="team-share-browser hidden" aria-label="Team Share HDF5 browser">
+              <div class="team-share-toolbar">
+                <button id="team-share-up" class="button ghost" type="button" disabled>↑ Up</button>
+                <button id="team-share-refresh" class="button ghost" type="button">Refresh</button>
+              </div>
+              <nav id="team-share-breadcrumbs" class="team-share-breadcrumbs" aria-label="Team Share folder path"></nav>
+              <p id="team-share-status" class="team-share-status" role="status">Ready to browse the private HDF5 workspace.</p>
+              <div id="team-share-list" class="team-share-list" role="listbox" aria-label="Team Share folders and HDF5 files"></div>
+              <button id="team-share-more" class="button ghost full-width hidden" type="button">Load more</button>
+              <div id="team-share-selection" class="team-share-selection">No HDF5 file selected.</div>
+              <button id="team-share-open" class="button primary full-width" type="button" disabled>Open selected HDF5</button>
+            </section>
 
             <button id="fixture-button" class="button secondary full-width" type="button">
               Open synthetic example
