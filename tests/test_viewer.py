@@ -4,6 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 import re
+import hashlib
 
 import h5py
 import numpy as np
@@ -277,6 +278,22 @@ class ViewerTests(unittest.TestCase):
         self.assertEqual(selectors - html_ids - dynamic_popup_ids, set())
         self.assertNotRegex(html, r'https?://')
         self.assertTrue((server.STATIC_ROOT / "vendor" / "plotly-3.1.0.min.js").exists())
+
+    def test_offline_plotly_bundle_integrity_and_loading_order(self) -> None:
+        # Official plotly.js-dist-min@3.1.0 bundle; reject truncated/corrupt assets.
+        plotly_path = "/static/vendor/plotly-3.1.0.min.js"
+        response = self.client.get(plotly_path)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("javascript", response.content_type)
+        self.assertEqual(
+            hashlib.sha256(response.data).hexdigest(),
+            "122e3be346d66616944d0b83eaaf7242581508c3c1cfa0995a17af0d83eff770",
+        )
+        response.close()
+        with self.client.get("/") as page:
+            html = page.get_data(as_text=True)
+        self.assertLess(html.index(f'<script src="{plotly_path}">'),
+                        html.index('<script src="/static/app.js">'))
 
     def test_two_primary_workspaces_and_configuration_definitions(self) -> None:
         html = (server.STATIC_ROOT / "index.html").read_text(encoding="utf-8")
