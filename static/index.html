@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>TOFshield Simulator - Instrument Configurator</title>
+    <link rel="stylesheet" href="/static/app.css" />
+    <link rel="stylesheet" href="/static/enhancements.css" />
+    <link rel="stylesheet" href="/static/tofwerk-assessment.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Return to data loader">
+          <img src="/static/assets/tofshield-logo.png" alt="TOFshield" />
+          <span class="brand-copy">
+            <strong>TOFshield<sup>®</sup> ADA</strong>
+            <small>HDF5 spectrum explorer &amp; generator</small>
+          </span>
+        </a>
+        <div class="topbar-center">
+          <span class="eyebrow">TOFSHIELD INSTRUMENT CONSOLE</span>
+          <strong class="workspace-title">TOFshield Simulator - Instrument Configurator</strong>
+          <span id="active-file-title">No HDF5 file open</span>
+        </div>
+        <div class="runtime-status" aria-live="polite">
+          <a class="button secondary guide-link" title="Open the guide in a separate window" href="/static/guide.html" target="_blank" rel="noopener">User Guide</a>
+          <span class="status-dot"></span>
+          <span>Local · read-only</span>
+          <button id="reset-application" class="button danger" type="button" disabled>Reset application</button>
+          <span class="version">v0.4.6</span>
+        </div>
+      </header>
+
+      <nav class="workspace-tabs" aria-label="Application workspace">
+        <button class="workspace-tab active" type="button" data-workspace-target="spectrum-workspace">
+          <span>01</span><strong>Spectrum Workspace</strong><small>Open, generate, inspect and export HDF5 data</small>
+        </button>
+        <button class="workspace-tab" type="button" data-workspace-target="configuration-workspace">
+          <span>02</span><strong>Instrument Configuration</strong><small>Define the illustrative instrument and acquisition state</small>
+        </button>
+        <button class="workspace-tab" type="button" data-workspace-target="tofwerk-workspace">
+          <span>03</span><strong>TOFWERK HDF5</strong><small>Measured data · suitability for ADA development</small>
+        </button>
+      </nav>
+
+      <main class="workspace workspace-panel active" id="spectrum-workspace">
+        <aside class="inspector" aria-label="HDF5 file and metadata inspector">
+          <section class="load-card" id="load-card">
+            <div class="section-heading">
+              <div>
+                <span class="eyebrow">DATA SOURCE</span>
+                <h1 id="data-source-title">Open an HDF5 file</h1>
+              </div>
+              <span class="safe-badge">STAYS LOCAL</span>
+            </div>
+
+            <div id="acquisition-notice" class="acquisition-notice hidden"><strong>Imported measurement · locked</strong><p>Recorded fields are read-only. Missing values are shown as Not recorded.</p><a href="/?simulate=vocus" class="button secondary">New Vocus simulation</a><a href="/?simulate=miptof" class="button secondary">New mipTOF simulation</a></div>
+            <nav class="generator-tabs" aria-label="Open or generate HDF5 data">
+              <button class="generator-tab active" type="button" data-generator-panel="open-panel">Open HDF5</button>
+              <button class="generator-tab" type="button" data-generator-panel="vocus-panel">Vocus CI-TOF</button>
+              <button class="generator-tab" type="button" data-generator-panel="miptof-panel">mipTOF</button>
+            </nav>
+
+            <div id="open-panel" class="generator-panel active">
+            <label class="drop-zone" id="drop-zone" for="file-input">
+              <input id="file-input" type="file" accept=".h5,.hdf5,.hdf" />
+              <span class="drop-icon" aria-hidden="true">⇧</span>
+              <strong>Choose or drop a file</strong>
+              <span>Best for smaller HDF5 files</span>
+            </label>
+
+            <div class="divider"><span>or open without copying</span></div>
+
+            <form id="path-form" class="path-form">
+              <label for="path-input">Local Ubuntu path</label>
+              <div class="input-button-row">
+                <input
+                  id="path-input"
+                  type="text"
+                  spellcheck="false"
+                  autocomplete="off"
+                  placeholder="/media/sali/ADA/.../sample.h5"
+                />
+                <button type="submit" class="button primary">Open</button>
+              </div>
+              <small id="path-help">Allowed read roots will appear here.</small>
+            </form>
+
+            <button id="fixture-button" class="button secondary full-width" type="button">
+              Open synthetic example
+            </button>
+            </div>
+
+            <form id="vocus-panel" class="generator-panel generator-form">
+              <div class="synthetic-notice">
+                <strong>Educational synthetic generator</strong>
+                <span>Not measured TOFWERK data and not validated for identification.</span>
+              </div>
+              <label for="vocus-reagent">Reagent ion</label>
+              <input id="vocus-reagent" list="reagent-options" value="I-" required />
+              <datalist id="reagent-options"></datalist>
+              <label for="vocus-targets">Targets</label>
+              <textarea id="vocus-targets" rows="3" placeholder="Enter a compound name or molecular formula" required></textarea>
+              <small>Comma-separated names or molecular formulas.</small>
+              <label for="vocus-target-picker">Add from forensic and safety library</label>
+              <select id="vocus-target-picker"><option value="">Select a substance…</option></select>
+              <label for="vocus-environment">Environmental matrix</label>
+              <textarea id="vocus-environment" rows="2" placeholder="H2O, N2, O2, CO2">H2O, N2, O2, CO2</textarea>
+              <button class="button primary full-width" type="submit">Generate and view Vocus HDF5</button>
+            </form>
+
+            <form id="miptof-panel" class="generator-panel generator-form">
+              <div class="synthetic-notice">
+                <strong>Educational synthetic generator</strong>
+                <span>Plasma elemental/isotopic simulation—not EI and not measured data.</span>
+              </div>
+              <label for="miptof-isotopes">Target isotopes</label>
+              <textarea id="miptof-isotopes" rows="3" placeholder="Enter an isotope or element, for example U-235 or Fe" required></textarea>
+              <label for="miptof-isotope-picker">Add from isotope library</label>
+              <select id="miptof-isotope-picker"><option value="">Select an isotope…</option></select>
+              <label for="miptof-environment">Environmental elements or compounds</label>
+              <textarea id="miptof-environment" rows="2" placeholder="N2, O2, CO2, Ar, Fe">N2, O2, CO2, Ar, Fe</textarea>
+              <small>Compounds are atomized; the generated spectrum represents elemental ions.</small>
+              <button class="button primary full-width" type="submit">Generate and view mipTOF HDF5</button>
+            </form>
+
+            <a id="download-generated" class="button secondary full-width hidden" href="#" download>
+              Download generated HDF5
+            </a>
+          </section>
+
+<section id="file-summary" class="file-summary hidden" aria-live="polite"></section>
+
+          <section id="companion-panel" class="companion-panel hidden">
+            <div class="section-heading compact-heading">
+              <div><span class="eyebrow">RUN CONTEXT</span><h2>Related files</h2></div>
+            </div>
+            <p class="micro-copy">Correlate reports, MATLAB workspaces, tables, notes and configuration files with the active HDF5 run.</p>
+            <label class="button secondary full-width file-button" for="companion-input">Add companion files</label>
+            <input id="companion-input" class="visually-hidden" type="file" multiple accept=".pdf,.mat,.csv,.tsv,.xlsx,.xls,.txt,.log,.ini,.json,.yaml,.yml" />
+            <div id="companion-results" class="companion-results"></div>
+          </section>
+
+          <section id="hdf-search-panel" class="hdf-search-panel hidden">
+            <div class="panel-action-heading"><label for="hdf-search"><span>Find inside HDF5</span></label><button id="expand-hdf" class="button ghost compact-button" type="button">Open HDF5 window</button></div>
+            <div class="input-button-row">
+              <input id="hdf-search" type="search" placeholder="Cannabinol, serial, pressure…" />
+              <button id="hdf-search-button" class="button primary" type="button">Find</button>
+            </div>
+            <small>Searches paths, datasets, attributes, scalar values and embedded configuration.</small>
+            <div id="hdf-search-navigation" class="search-navigation hidden"><strong id="hdf-search-count">0 matches</strong><button id="hdf-search-previous" class="button ghost compact-button" type="button">Previous</button><span id="hdf-search-position">0 / 0</span><button id="hdf-search-next" class="button ghost compact-button" type="button">Next</button></div>
+            <div id="hdf-search-results" class="hdf-search-results"></div>
+          </section>
+
+          <nav class="inspector-tabs" aria-label="Data inspector categories">
+            <button class="tab-button active" data-panel="metadata-panel">Parameters</button>
+            <button class="tab-button" data-panel="datasets-panel">Datasets</button>
+            <button class="tab-button" data-panel="quality-panel">Data quality</button>
+          </nav>
+
+          <section id="metadata-panel" class="tab-panel active">
+            <div id="metadata-empty" class="empty-panel">
+              Instrument, acquisition, calibration, and environment parameters will appear here.
+            </div>
+            <div id="metadata-content"></div>
+          </section>
+
+          <section id="datasets-panel" class="tab-panel">
+            <label class="search-field" for="dataset-search">
+              <span>Search HDF5 objects</span>
+              <input id="dataset-search" type="search" placeholder="MassAxis, pressure, PeakData…" />
+            </label>
+            <div id="dataset-list" class="dataset-list"></div>
+          </section>
+
+          <section id="quality-panel" class="tab-panel">
+            <div id="quality-content" class="quality-content">
+              <div class="empty-panel">Open a file to see calibration and data-quality notes.</div>
+            </div>
+          </section>
+        </aside>
+
+        <section class="analysis-stage" aria-label="Interactive mass spectrum">
+          <div class="stage-header">
+            <div>
+              <span class="eyebrow">MASS SPECTRUM</span>
+              <h2>Amplitude / signal intensity vs. mass-to-charge ratio</h2>
+              <p id="spectrum-source">Open an HDF5 file to begin.</p>
+            </div>
+            <div id="source-badge" class="source-badge empty">NO SOURCE</div>
+            <button id="expand-spectrum" class="button ghost compact-button" type="button" disabled>Open spectrum window</button>
+          </div>
+
+          <div id="configuration-report" class="note-box">Stored-data analysis. Instrument response model is off.</div>
+<section class="chart-toolbar" aria-label="Spectrum controls">
+            <label class="wide-control" for="candidate-select">
+              <span>Spectrum source</span>
+              <select id="candidate-select" disabled>
+                <option>No compatible dataset loaded</option>
+              </select>
+            </label>
+            <label for="aggregation-select">
+              <span>Aggregation</span>
+              <select id="aggregation-select" disabled>
+                <option value="sum">Sum</option>
+                <option value="mean">Mean</option>
+              </select>
+            </label>
+            <label for="scale-select">
+              <span>Y scale</span>
+              <select id="scale-select" disabled>
+                <option value="linear">Linear</option>
+                <option value="log">Logarithmic</option>
+              </select>
+            </label>
+            <button id="reset-view" class="button ghost" type="button" disabled>Reset view</button>
+          </section>
+
+          <section class="range-bar" aria-label="Exact mass range selection">
+            <div class="range-label">
+              <span class="eyebrow">FOCUSED WINDOW</span>
+              <strong id="visible-range-label">Full range</strong>
+            </div>
+            <label for="range-min">
+              <span>From</span>
+              <input id="range-min" type="number" step="any" placeholder="min m/z" disabled />
+            </label>
+            <label for="range-max">
+              <span>To</span>
+              <input id="range-max" type="number" step="any" placeholder="max m/z" disabled />
+            </label>
+            <button id="apply-range" class="button primary" type="button" disabled>Load exact window</button>
+            <button id="clear-range" class="button secondary" type="button" disabled>Full spectrum</button>
+            <a id="export-csv" class="button ghost disabled" href="#" download>Export window CSV</a>
+          </section>
+
+          <div id="chart-message" class="chart-message">
+            <div class="chart-placeholder">
+              <span class="spectrum-mark" aria-hidden="true"></span>
+              <strong>No spectrum loaded</strong>
+              <p>Load a compatible HDF5 file from the panel on the left.</p>
+            </div>
+          </div>
+          <div id="spectrum-chart" class="spectrum-chart hidden"></div>
+
+          <section id="time-series-panel" class="time-series-panel">
+            <div class="panel-title">
+              <div><span class="eyebrow">TIME-BASED MEASUREMENT</span><h3>Extracted Ion Trace (EIT)</h3><p>Signal intensity over acquisition time for the selected m/z range.</p></div>
+              <button id="expand-eit" class="button ghost compact-button" type="button" disabled>Open EIT window</button>
+            </div>
+            <div class="time-controls">
+              <label><span>m/z from</span><input id="time-mass-min" type="number" step="any" disabled /></label>
+              <label><span>m/z to</span><input id="time-mass-max" type="number" step="any" disabled /></label>
+              <label><span>Time from</span><input id="time-min" type="number" step="any" placeholder="start" disabled /></label>
+              <label><span>Time to</span><input id="time-max" type="number" step="any" placeholder="end" disabled /></label>
+              <button id="load-time-series" class="button primary" type="button" disabled>Load ion trace</button>
+              <button id="clear-time-range" class="button secondary" type="button" disabled>Full period</button>
+            </div>
+            <div id="time-series-message" class="transform-empty">Open a time-resolved HDF5 dataset to inspect its acquisition history.</div>
+            <div id="time-series-chart" class="time-series-chart hidden"></div>
+            <div id="time-series-summary" class="note-box hidden"></div>
+          </section>
+
+          <div class="interaction-hint">
+            <span><b>Drag</b> to zoom</span>
+            <span><b>Shift + drag</b> to pan</span>
+            <span><b>Scroll</b> to zoom</span>
+            <span><b>Double-click</b> to reset</span>
+            <span>The lower range strip preserves full-spectrum context</span>
+          </div>
+
+          <section class="analysis-grid">
+            <article class="metric-panel">
+              <div class="panel-title">
+                <div>
+                  <span class="eyebrow">VISIBLE DATA</span>
+                  <h3>Window statistics</h3>
+                </div>
+              </div>
+              <div id="spectrum-stats" class="stat-grid">
+                <div><span>Points</span><strong>—</strong></div>
+                <div><span>Maximum</span><strong>—</strong></div>
+                <div><span>Mean</span><strong>—</strong></div>
+                <div><span>Total signal</span><strong>—</strong></div>
+              </div>
+              <div id="decimation-note" class="note-box hidden"></div>
+            </article>
+
+            <article class="metric-panel peak-panel">
+              <div class="panel-title">
+                <div>
+                  <span class="eyebrow">PEAK INSPECTOR</span>
+                  <h3>Strongest local maxima</h3>
+                </div>
+                <span class="micro-copy">Click a row to zoom</span>
+              </div>
+              <div class="peak-table-wrap">
+                <table class="peak-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Centroid m/z</th>
+                      <th>Intensity</th>
+                      <th>FWHM (Th)</th>
+                      <th>Resolving power</th>
+                      <th>Peak quality</th>
+                      <th>Concentration</th>
+                      <th>S/N</th>
+                      <th>LOD/LOQ status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="peak-table-body">
+                    <tr><td colspan="9" class="empty-cell">No peak data</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </section>
+
+          <section class="transform-panel" aria-label="Fourier analysis of the displayed mass spectrum">
+            <div class="transform-header">
+              <div>
+                <span class="eyebrow">MASS-AXIS PATTERN ANALYSIS</span>
+                <h3>Fourier &amp; Fast Fourier Transform</h3>
+                <p>Inspect periodic spacing within intensity sampled along the m/z axis.</p>
+              </div>
+              <div class="transform-mode" role="group" aria-label="Transform algorithm">
+                <button id="dft-mode" class="button secondary active" type="button">Direct Fourier transform</button>
+                <button id="fft-mode" class="button secondary" type="button">Fast Fourier transform</button>
+                <button id="expand-transform" class="button ghost" type="button" disabled>Open transform window</button>
+              </div>
+            </div>
+            <div class="transform-controls">
+              <label><input id="transform-remove-mean" type="checkbox" checked /> Remove mean (DC baseline)</label>
+              <label><input id="transform-hann" type="checkbox" checked /> Apply Hann window</label>
+              <label><span>Amplitude scale</span><select id="transform-scale"><option value="linear">Linear</option><option value="log">Logarithmic</option></select></label>
+              <button id="transform-run" class="button primary" type="button" disabled>Calculate transform</button>
+            </div>
+            <div class="transform-boundary"><strong>Interpretation boundary</strong><span>This transform uses intensity versus m/z after interpolation onto an evenly spaced mass grid. Its horizontal axis is cycles per Thomson (cycles/Th), not flight-time frequency or detector frequency. Access to the instrument's raw time-domain waveform would be required for a true TOF frequency-domain analysis.</span></div>
+            <div id="transform-empty" class="transform-empty">Open or generate a spectrum, then calculate a transform.</div>
+            <div id="transform-chart" class="transform-chart hidden"></div>
+            <div id="transform-summary" class="transform-summary hidden"></div>
+          </section>
+
+          <footer class="app-footer">
+            <div>
+              <strong>TOFshield<sup>®</sup> ADA</strong>
+              <span>Advanced Detection &amp; Analytics</span>
+            </div>
+            <p>
+              Read-only exploratory viewer · No automatic compound identification ·
+              Data interpretation remains with the qualified analyst.
+            </p>
+          </footer>
+        </section>
+      </main>
+
+      <main class="configuration-workspace workspace-panel" id="configuration-workspace">
+        <header class="configuration-hero">
+          <div>
+            <span class="eyebrow">ILLUSTRATIVE ENGINEERING MODEL</span>
+            <h1>Instrument Configuration</h1>
+            <p>Describe the sample path, reagent-ion conditions, ion transfer, TOF analyzer and acquisition state used for an educational analysis scenario.</p>
+          </div>
+          <div class="configuration-notice"><strong>DEMO PARAMETERS</strong><span>These values are not TOFWERK specifications and do not predict validated instrument performance.</span></div>
+        </header>
+
+        <section id="instrument-context-card" class="instrument-context-card">
+          <div><span class="eyebrow">HDF5 INSTRUMENT CONTEXT</span><strong id="detected-instrument-family">No instrument family detected</strong><small id="detected-instrument-reason">Open an HDF5 file to evaluate descriptive instrument metadata.</small></div>
+          <span id="detected-instrument-badge" class="source-badge empty">UNKNOWN</span>
+        </section>
+
+        <div id="configuration-lock-notice" class="acquisition-notice hidden"><strong>Recorded acquisition settings</strong><p>These fields describe the imported file and cannot be changed. Only unambiguous metadata is shown. Use Parameters for the original records. Calibration studies below remain separate analysis inputs.</p><a class="button secondary" href="/?simulate=vocus">New Vocus simulation</a> <a class="button secondary" href="/?simulate=miptof">New mipTOF simulation</a></div>
+        <form id="instrument-form" class="instrument-form">
+          <section class="configuration-command">
+            <label id="configuration-model-switch" class="model-switch"><input id="configuration-enabled" type="checkbox" /><span><strong>Apply illustrative response model</strong><small>When enabled, selected modelled parameters transform the displayed spectrum without altering the source HDF5 file.</small></span></label>
+            <label id="configuration-reagent-field"><span>Reagent-ion mode</span><select id="configuration-reagent"><option>I-</option><option>NO3-</option><option>H3O+</option><option>NH4+</option><option>NO+</option><option>O2+</option></select><small>Used for newly generated Vocus spectra. It cannot re-ionize an existing measured spectrum.</small></label>
+            <label><span>Instrument state</span><select id="configuration-state"><option value="ready">Ready</option><option value="standby">Standby</option><option value="fault">Fault</option></select><small>Ready permits illustrative signal output; standby and fault suppress it.</small></label>
+          </section>
+
+          <div id="instrument-fields" class="instrument-field-groups"></div>
+
+          <section class="configuration-actions">
+            <div><strong id="configuration-dirty" aria-live="polite">Demo defaults loaded. Response model is off.</strong><small>Applying settings refreshes the current spectrum. Generate again after changing reagent-ion chemistry.</small></div>
+            <div class="configuration-buttons"><button class="button primary" type="submit">Apply configuration &amp; analyze</button><button id="configuration-reset" class="button secondary" type="button">Reset demo defaults</button><button id="configuration-export" class="button ghost" type="button">Download configuration JSON</button></div>
+          </section>
+        </form>
+
+        <section class="detection-capability" aria-labelledby="detection-heading">
+          <header class="detection-header">
+            <div><span class="eyebrow">ANALYTICAL METHOD STUDY</span><h2 id="detection-heading">LOD &amp; LOQ Detection Capability</h2><p>Estimate analyte-specific limits from calibration and background measurements, or record independently established limits.</p></div>
+            <div class="configuration-notice"><strong>METHOD-SPECIFIC</strong><span>Limits apply only to the stated analyte, matrix, ion, acquisition method and instrument configuration.</span></div>
+          </header>
+          <form id="detection-form" class="detection-form">
+            <div class="detection-grid">
+              <label><span>Analyte</span><input id="detection-analyte" placeholder="Enter the compound, element or isotope" required /></label>
+              <label><span>Formula</span><input id="detection-formula" placeholder="Optional formula" /></label>
+              <label><span>Quantifier ion m/z</span><input id="detection-mz" type="number" step="any" placeholder="Enter the quantifier m/z" min="0" required /></label>
+              <label><span>m/z tolerance (Th)</span><input id="detection-tolerance" type="number" step="any" value="0.05" min="0.000001" required /></label>
+              <label><span>Concentration unit</span><input id="detection-unit" placeholder="For example ppb or ng/L" required /></label>
+              <label><span>Matrix</span><input id="detection-matrix" placeholder="For example air or water" required /></label>
+              <label><span>Calculation method</span><select id="detection-method"><option value="calibration">Calibration curve — 3.3σ/S and 10σ/S</option><option value="signal_noise">Signal-to-noise — 3:1 and 10:1</option><option value="user_supplied">User-supplied limits</option></select></label>
+              <label><span>Validation label</span><select id="detection-validation"><option>Estimated—not independently validated</option><option>User-supplied—not verified by ADA</option><option>Validated by laboratory method</option></select></label>
+            </div>
+            <div id="calibration-inputs" class="study-input-grid">
+              <label><span>Calibration points</span><textarea id="detection-calibration" rows="7" placeholder="0,18&#10;0.5,71&#10;1,123"></textarea><small>One concentration,response pair per line. At least three points.</small></label>
+              <label><span>Blank responses</span><textarea id="detection-blanks" rows="7" placeholder="17&#10;20&#10;16"></textarea><small>One response per line. Replicate blanks establish background variation.</small></label>
+            </div>
+            <div id="supplied-limit-inputs" class="study-input-grid hidden">
+              <label><span>User-supplied LOD</span><input id="detection-lod" type="number" step="any" min="0" /></label>
+              <label><span>User-supplied LOQ</span><input id="detection-loq" type="number" step="any" min="0" /></label>
+            </div>
+            <div class="detection-actions"><button class="button primary" type="submit">Calculate and apply LOD/LOQ</button><button id="detection-clear" class="button secondary" type="button">Clear study</button><button id="detection-export" class="button ghost" type="button" disabled>Download study JSON</button></div>
+          </form>
+          <div id="detection-result" class="detection-result"><strong>No detection-capability study applied.</strong><span>A single spectrum, FWHM or resolving power cannot establish LOD or LOQ.</span></div>
+          <div class="transform-boundary"><strong>Interpretation boundary</strong><span>Below LOD means not reliably distinguishable from background. Between LOD and LOQ means detected but not reliably quantifiable. Calculated estimates require confirmation with independent samples near the limits.</span></div>
+        </section>
+      </main>
+
+    <main class="workspace-panel review-workspace" id="tofwerk-workspace">
+      <header class="review-heading"><div><span class="eyebrow">MEASURED DATA REVIEW</span><h1>TOFWERK HDF5</h1><p id="review-progress">Loading assessment…</p></div><div class="review-actions"><button id="review-refresh" type="button" class="button secondary">Refresh</button><button id="review-export" type="button" class="button primary">Export table</button></div></header>
+      <div class="review-notice"><strong id="review-state">Review in progress</strong>Development means ingestion, visualization and replay. A readable file is not automatically suitable for ML training or validated detection. Instrument groups use delivery context where explicit model metadata is unavailable.</div>
+      <details class="review-method"><summary>How to interpret these decisions</summary><p><strong>Good for dev:</strong> passes the structural and core numeric checks used here for ingestion, visualization and replay. <strong>Conditional:</strong> resolve the listed data-layout, timing or instrument-domain issue. <strong>No good as supplied:</strong> empty measurements or an HDF5 read failure; see the file-specific reason. Empty files can still serve as schema fixtures.</p><p><strong>ML training:</strong> mixture and drug standards provide useful label sources, but observation-level labels, exposure windows, matching controls and independent run partitions need curation. Ambient mipTOF observations are not verified target-class examples. Derivatives of one run must stay in the same partition.</p><p><strong>Evidence:</strong> all datasets inventoried; full numeric scans of the core spectra, peaks and timing arrays, mass-axis checks and SHA-256 fingerprints. Auxiliary waveforms and experimental detection performance are not exhaustively validated. Source paths and local-versus-downloaded provenance are recorded per file.</p><p><strong>Companions reviewed:</strong> Vocus experimental PDF; four MATLAB analysis files; mipTOF experiment notes, air-flow calibration workbook and processed CSV metadata. These describe noise/threshold issues, concentration uncertainty, contamination and acquisition events that limit scientific reuse.</p></details>
+      <div id="review-counts" class="review-counts"></div>
+      <div class="review-filters"><label>Find a file or finding<input id="review-search" type="search" placeholder="Search filenames, reasons…"></label><label>Instrument<select id="review-instrument"><option value="">All instruments</option><option>Vocus CI-TOF</option><option>mipTOF</option><option>Other / unconfirmed</option></select></label><label>ADA development<select id="review-status"><option value="">All decisions</option value="good">Good for dev</option><option value="conditional">Conditional</option><option value="not_suitable">No good as supplied</option><option value="unreviewed">Not inspected</option></select></label></div>
+      <div class="review-meta"><span id="review-results"></span><span id="review-updated"></span></div><p id="review-error" role="alert"></p><div id="review-tables"></div>
+    </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="loading-overlay" class="loading-overlay hidden" aria-live="assertive">
+      <div class="loader"></div>
+      <strong id="loading-label">Reading HDF5 structure…</strong>
+      <span>Large spectra may take a moment.</span>
+    </div>
+
+    <script src="/static/vendor/plotly-3.1.0.min.js"></script>
+    <script src="/static/app.js"></script>
+    <script src="/static/tofwerk-assessment.js"></script>
+  </body>
+</html>

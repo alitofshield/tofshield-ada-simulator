@@ -1,0 +1,18 @@
+{
+  "name": "tofshield-ada-simulator",
+  "version": "0.4.6",
+  "private": true,
+  "description": "Cloudflare Container deployment for the TOFshield Simulator and Instrument Configurator",
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cloudflare/containers": "0.0.30"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "wrangler": "4.136.1"
+  }
+}

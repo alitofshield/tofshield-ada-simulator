@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+venv
+node_modules
+.wrangler
+__pycache__
+*.pyc
+*.zip
+*.tar
+*.tar.gz
+*.log
+*.h5
+*.hdf5
+*.hdf
+!fixtures/synthetic_tofwerk_style_reference.h5

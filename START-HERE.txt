@@ -1,0 +1,27 @@
+TOFshield Simulator - Instrument Configurator
+Version 0.4.6 — production Cloudflare Container deployment
+
+1. Stop an older copy running on port8083 (Ctrl+C in its terminal).
+2. Extract this ZIP and open a terminal in its extracted folder.
+3. Run: bash start-simulator.sh
+4. Open http://127.0.0.1:8083 and verify v0.4.6 at the top right.
+5. Select User Guide at the top to open the guide in a separate window.
+
+Python 3 with venv is required. First launch installs Flask, h5py and NumPy
+and therefore requires internet. The guide and animation themselves work
+locally; only external source links require internet.
+
+WHAT CHANGED
+- Title: TOFshield Simulator - Instrument Configurator.
+- User Guide opens a separate, resizable window (or a browser tab fallback).
+- Guide: objectives, three panel categories, input explanations and formulas.
+- Animated Vocus/mipTOF sample-to-detector educational walkthrough.
+- Imported HDF5 acquisition fields are locked, including reagent, targets,
+  matrix and instrument configuration. Missing metadata is Not recorded.
+- New simulation starts a fresh editable scenario, leaving source files intact.
+- 97-file TOFWERK assessment and Open in viewer remain available.
+
+The source measurements are not bundled. Keep the ADA drive connected at its
+existing location, or configure ADA_HDF5_ROOTS for your own HDF5 folder.
+This is an educational simulator and data-review application, not hardware
+control software or a validated chemical identification system.
