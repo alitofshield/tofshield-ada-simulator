@@ -89,7 +89,7 @@ class TeamShareImportTests(unittest.TestCase):
 
             with (
                 patch.object(server, "UPLOAD_ROOT", upload_root),
-                patch.dict(server.app.config, {"MAX_CONTENT_LENGTH": 8}),
+                patch.dict(server.app.config, {"TEAM_SHARE_MAX_CONTENT_LENGTH": 8}),
             ):
                 response = self.client.post(
                     "/api/internal/team-share-import",
@@ -101,6 +101,68 @@ class TeamShareImportTests(unittest.TestCase):
                     },
                 )
 
+                self.assertEqual(response.status_code, 413)
+                self.assertIn("Team Share import", response.get_json()["error"])
+                self.assertEqual(list(upload_root.iterdir()), [])
+
+    def test_private_large_stream_does_not_use_browser_upload_limit(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            directory = Path(temporary_directory)
+            upload_root = directory / "uploads"
+            upload_root.mkdir()
+            self._synthetic_hdf5(directory)
+            fixture = directory / "team-share-test.h5"
+            # A valid synthetic HDF5 with trailing padding, never a measured file.
+            size = 417 * 1024 * 1024
+            with fixture.open("r+b") as output:
+                output.truncate(size)
+            with (
+                patch.object(server, "UPLOAD_ROOT", upload_root),
+                patch.dict(server.app.config, {"MAX_CONTENT_LENGTH": 100 * 1024 * 1024}),
+                fixture.open("rb") as body,
+            ):
+                response = self.client.post(
+                    "/api/internal/team-share-import", input_stream=body,
+                    content_length=size, content_type="application/octet-stream",
+                    headers={"X-ADA-Internal-Import": "team-share-worker",
+                             "X-ADA-Team-Share-Key": "synthetic-large.h5"},
+                )
+                self.assertEqual(response.status_code, 200, response.get_json())
+                file_id = response.get_json()["file_id"]
+                self.assertEqual(server._get_open_file(file_id).path.stat().st_size, size)
+                self.client.delete(f"/api/file/{file_id}")
+                self.assertEqual(list(upload_root.iterdir()), [])
+
+    def test_browser_upload_still_uses_browser_limit(self) -> None:
+        with patch.dict(server.app.config, {"MAX_CONTENT_LENGTH": 8}):
+            response = self.client.post("/api/upload", data=b"0123456789")
+            self.assertEqual(response.status_code, 413)
+            self.assertIn("The upload exceeds", response.get_json()["error"])
+
+    def test_private_import_respects_available_storage(self) -> None:
+        with patch.object(server.shutil, "disk_usage") as disk_usage:
+            disk_usage.return_value.free = 64 * 1024 * 1024 + 8
+            response = self.client.post(
+                "/api/internal/team-share-import", data=b"0123456789",
+                headers={"X-ADA-Internal-Import": "team-share-worker",
+                         "X-ADA-Team-Share-Key": "oversized.h5"},
+            )
+            self.assertEqual(response.status_code, 413)
+            self.assertIn("Team Share import", response.get_json()["error"])
+
+    def test_stream_without_content_length_is_bounded_and_cleaned_up(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            upload_root = Path(temporary_directory)
+            with (
+                patch.object(server, "UPLOAD_ROOT", upload_root),
+                patch.dict(server.app.config, {"TEAM_SHARE_MAX_CONTENT_LENGTH": 8}),
+            ):
+                response = self.client.post(
+                    "/api/internal/team-share-import", data=b"0123456789",
+                    environ_overrides={"CONTENT_LENGTH": "", "wsgi.input_terminated": True},
+                    headers={"X-ADA-Internal-Import": "team-share-worker",
+                             "X-ADA-Team-Share-Key": "oversized.h5"},
+                )
                 self.assertEqual(response.status_code, 413)
                 self.assertEqual(list(upload_root.iterdir()), [])
 

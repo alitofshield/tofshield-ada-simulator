@@ -14,6 +14,7 @@ import io
 import math
 import os
 import re
+import shutil
 import tempfile
 import threading
 import time
@@ -68,6 +69,7 @@ def _configured_roots() -> list[Path]:
 
 ALLOWED_ROOTS = _configured_roots()
 UPLOAD_LIMIT_MB = int(os.environ.get("ADA_VIEWER_MAX_UPLOAD_MB", "2048"))
+TEAM_SHARE_LIMIT_MB = int(os.environ.get("ADA_TEAM_SHARE_MAX_IMPORT_MB", "1024"))
 UPLOAD_ROOT = Path(
     os.environ.get(
         "ADA_VIEWER_UPLOAD_DIR",
@@ -86,6 +88,7 @@ GENERATED_ROOT.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__, static_folder=None)
 app.config["MAX_CONTENT_LENGTH"] = UPLOAD_LIMIT_MB * 1024 * 1024
+app.config["TEAM_SHARE_MAX_CONTENT_LENGTH"] = TEAM_SHARE_LIMIT_MB * 1024 * 1024
 
 
 @dataclass
@@ -1162,7 +1165,12 @@ def import_team_share_hdf5() -> Response:
     if not original_name or suffix not in VALID_EXTENSIONS:
         raise ValueError("Choose a Team Share file ending in .h5, .hdf5, or .hdf.")
 
-    maximum_bytes = int(app.config["MAX_CONTENT_LENGTH"])
+    # Private R2 streams have their own cap, leaving 64 MiB of storage headroom.
+    maximum_bytes = max(0, min(
+        int(app.config["TEAM_SHARE_MAX_CONTENT_LENGTH"]),
+        shutil.disk_usage(UPLOAD_ROOT).free - 64 * 1024 * 1024,
+    ))
+    request.max_content_length = maximum_bytes
     if request.content_length is not None and request.content_length > maximum_bytes:
         raise RequestEntityTooLarge()
 
@@ -1397,6 +1405,11 @@ def export_csv(file_id: str) -> Response:
 
 @app.errorhandler(RequestEntityTooLarge)
 def too_large(_: RequestEntityTooLarge) -> tuple[Response, int]:
+    if request.path == "/api/internal/team-share-import":
+        return jsonify({"error": (
+            "The Team Share import exceeds the independent server-side import "
+            "limit or available private cache storage."
+        )}), 413
     return (
         jsonify(
             {
