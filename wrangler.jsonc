@@ -16,7 +16,8 @@
   "r2_buckets": [
     {
       "binding": "TEAM_SHARE",
-      "bucket_name": "tofshield-sales-marketing-eu"
+      "bucket_name": "tofshield-sales-marketing-eu",
+      "jurisdiction": "eu"
     }
   ],
   "containers": [
